@@ -1,0 +1,25 @@
+---
+title: "QCI_documentatie"
+author: "Jan Thesingh"
+date: "2023-09-21"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+Dit Markdown document is gebaseerd op het Rscript voor QCI
+
+...{r}
+library(ltm)
+library(lavaan)
+library(markdown)
+library(foreign)
+library(semPlot)
+library(faraway)
+library(survival)
+library(psych)
+library(GPArotation)
+...

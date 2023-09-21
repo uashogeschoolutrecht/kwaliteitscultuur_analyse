@@ -1,0 +1,82 @@
+---
+title: "QCI"
+author: "Jan Thesingh (en advies van Team D&A)"
+output:
+  html_document:
+    df_print: paged
+---
+
+## Libraries inladen
+
+> *D&A: alleen libaries inladen die je ook daadwerkelijk gebruikt in je script! Dat scheelt anderen die al deze libraries niet hebben geinstalleerd veel tijd, en houd je code eenvoudiger, zie ook [hier](https://stackoverflow.com/questions/45030397/what-is-the-downside-of-loading-too-many-packages)*
+
+```{r}
+    library(ltm)
+    library(lavaan)
+    library(markdown)
+    library(foreign)
+    library(semPlot)
+    library(faraway)
+    library(survival)
+    library(psych)
+    library(GPArotation)
+```
+
+## Inladen data
+
+Vraag:opschonen data in R , of in csv? Replace in R door wat? in script doen
+
+> *D&A: Opschonen data in R. Het handige hiervan is dat je exact terug kunt vinden hoe je dit gedaan hebt, en ook waarom en kun je eventueel de volgende keer exact hetzelfde automatisch uitvoeren. Wil je een voorbeeld zien? Kijk eens* [hier](https://github.com/Fraukje/NSE_Analyses/blob/main/NSE_data_cleaning.Rmd "Data cleaning stap van de NSE analytics"). *Afhankelijk van je analyse kun je missende waardes vervangen door het gemiddelde, omschalen naar een afwijkende waarde (bijvoorbeeld -1) of als missende waarde (NA) instellen. Omdat je hieronder met variantie en correlatie aan de gang gaat heeft waardes vervangen door het gemiddelde niet de voorkeur (dit heeft impact op je analyse uitkomsten).*
+
+```{r}
+library(sys)
+gebruiker = Sys.info()["user"]
+data_dir = paste(
+  "C:\\Users\\",
+  gebruiker,
+  "\\Stichting Hogeschool Utrecht\\FCA-DA-P - Analytics\\Analyse kwaliteitscultuur\\data",
+  sep=""
+  )
+qcidata <- read.csv2(
+  paste(data_dir,"\\QCIdata_volledig.csv",sep=""
+        ), header = TRUE)
+head(qcidata)
+summary(qcidata)
+```
+
+## Path analysis
+
+In pad analyse meet de interne correlatie tussen variabelen. In tegen stelling tot een normale (multiple) regressie kijk je dus niet alleen naar invloed van de onafhankelijke variabelen op de afhankelijke variabelen, maar ook wat de invloed op de onafhankelijke variabelen op elkaar is. Hier wordt dan ook over endogene of exogene variabelen gesproken i.p.v. onafhankelijk en afhankelijk. Exogene variabelen hebben enkel invloed op andere variabelen (en is dus enkel als onafhankelijke variabelen te gebruiken, denk bijvoorbeeld aan leeftijd). Endogene variabelen zijn variabelen die zowel onafhankelijk als afhankelijk zijn denk bijvoorbeeld aan de hoogte van een tentamen cijfer. Een voorbeeld zou bijvoorbeeld kunnen zijn dat zowel leeftijd als tentamen cijfer invloed heeft op slagingskans. Leeftijd kan echter ook invloed hebben op tentamen cijfer.
+
+Als we op de huidige set met vragen een pad analyse willen uitvoeren moeten we eerst vaststellen wat de afhankelijke en onafhankelijke variabelen zijn. Bij wijze van voorbeeld is hieronder een test gedaan. Er valt echter niks te zeggen over de correlatie, hiervoor moet eerst een hypothese opgesteld worden die bepaald welke vragen correleren met elkaar.
+
+Uiteindelijk is de vraag: wat wil je meten/toetsen? Hypothese is key!
+
+```{r}
+library(car)
+# Lineare regressie
+model1  <- lm(Vraag1 ~ Vraag4 + Vraag5 + Vraag6 + Vraag7 + Vraag8 , data = qcidata)
+summary(model1) # show results
+
+model2  <- lm(Vraag4 ~ Vraag6 + Vraag7 + Vraag8 , data = qcidata)
+summary(model2) # show results
+avPlots(model2)
+```
+
+```{r}
+# pad analyse 
+library(lavaan)
+
+model <-'
+Vraag1 ~ Vraag4 + Vraag5 + Vraag6 + Vraag7 + Vraag8
+Vraag4 ~ Vraag6 + Vraag7 + Vraag8
+'
+
+fit <- cfa(model, data = qcidata)
+
+summary(fit, fit.measures = TRUE, standardized=T,rsquare=T)
+
+library(semPlot)
+semPaths(fit,"std",layout = 'tree', edge.label.cex=.9, curvePivot = TRUE)
+
+```

@@ -1,0 +1,146 @@
+---
+title: "QCI"
+author: "Jan Thesingh (en advies van Team D&A)"
+output:
+  word_document: default
+  html_document:
+    df_print: paged
+---
+
+## Libraries inladen
+
+> *D&A: alleen libaries inladen die je ook daadwerkelijk gebruikt in je script! Dat scheelt anderen die al deze libraries niet hebben geinstalleerd veel tijd, en houd je code eenvoudiger, zie ook [hier](https://stackoverflow.com/questions/45030397/what-is-the-downside-of-loading-too-many-packages)*
+
+```{r}
+library(psych)  #Nodig voor functie alpha
+library(sys)    #Nodig voor uitvragen system gebruikersnaam
+```
+
+## Inladen data
+
+Vraag:opschonen data in R , of in csv? Replace in R door wat? in script doen
+
+> *D&A: Opschonen data in R. Het handige hiervan is dat je exact terug kunt vinden hoe je dit gedaan hebt, en ook waarom en kun je eventueel de volgende keer exact hetzelfde automatisch uitvoeren. Wil je een voorbeeld zien? Kijk eens* [hier](https://github.com/Fraukje/NSE_Analyses/blob/main/NSE_data_cleaning.Rmd "Data cleaning stap van de NSE analytics"). *Afhankelijk van je analyse kun je missende waardes vervangen door het gemiddelde, omschalen naar een afwijkende waarde (bijvoorbeeld -1) of als missende waarde (NA) instellen. Omdat je hieronder met variantie en correlatie aan de gang gaat heeft waardes vervangen door het gemiddelde niet de voorkeur (dit heeft impact op je analyse uitkomsten).*
+
+```{r}
+
+gebruiker <- Sys.info()["user"]
+data_dir <- paste(
+  "C:\\Users\\",gebruiker,"\\Stichting Hogeschool Utrecht\\FCA-DA-P - Analytics\\Analyse kwaliteitscultuur\\data",
+  sep="")
+
+qcidata <- read.csv2(
+  paste(
+    data_dir,"\\QCIdata_volledig.csv",sep=""), 
+  header = TRUE)
+
+head(qcidata)
+summary(qcidata)
+```
+
+## Interne consistentie meten
+
+Om interne consistentie per subschaal te meten is [Cronbach's Alpha](https://www.scribbr.nl/statistiek/cronbachs-alpha/) gebruikt, deze is geïnterpreteerd met gebruik van de volgende [bron](https://rpubs.com/hauselin/reliabilityanalysis).
+
+### Subschaal Individueel eigenaarschap (doeltreffendheid)
+
+```{r}
+vraag3=qcidata$Vraag3
+vraag4=qcidata$Vraag4
+vraag5=qcidata$Vraag5
+vraag6=qcidata$Vraag6
+
+alpha1=data.frame(vraag3,vraag4,vraag5,vraag6)
+alpha(alpha1)
+reliability(alpha1)
+```
+
+Het verwijderen van vraag3 resulteert in een verhoging qua betrouwbaarheid \>0,05 Vraag: Dus vervolgstap?
+
+> *D&A: Voorafgaand aan je analyse stel je een grenswaarde voor alpha op waaraan je wilt voldoen om je subschaal 'goed' te keuren, bijvoorbeeld 0,7 (inclusief bron, belangrijk!). Zodra je raw_alpha boven deze waarde uit kunt kies je er dan voor om te concluderen dat de vragen samen consistent genoeg zijn. Mocht je raw_alpha onder de 0,7 zitten ga je op zoek naar een vraag om te verwijderen, en verstandig is dan om de vraag te verwijderen waarmee je raw_alpha het meest stijgt. Maar let op: dit hangt óók af van je eigen kennis van de inhoud van de vraag. Soms zul je bij een te lage raw_alpha ook moeten durven concluderen dat je vragen samen niet consistent genoeg zijn en dus niet samen genomen mogen worden in één subschaal. Je moet dan eigenlijk 'terug naar de tekentafel' en betere vragen opstellen en de vragenlijst opnieuw afnemen voor de subschaal.*
+
+```{r}
+alpha1a=data.frame(vraag4,vraag5,vraag6)
+alpha(alpha1a)
+```
+
+Kijk wat er met resultaat vraag4 gebeurt. Ook deze geeft verschil \> 0,05. Vraag: Ook verwijderen?
+
+... maar onderstaande werkte niet... Waarom? Moet NA toch vervangen worden door gemiddelde van de kolom?
+
+> *D&A: Een correlatie/covariantie uitrekenen met missende (NA) waardes kan niet. Hiervoor is het belangrijk éérst te bedenken welke kolommen je wilt gaan gebruiken en daarvan alléén de subjecten meeneemt die voor elke kolom iets zinnigs hebben ingevuld. Een functie waarmee je eenvoudig alléén subjecten meeneemt zonder missende waardes (NA) is [complete_cases()](https://finnstats.com/2022/03/05/complete-cases-in-r/). Een andere optie is om een analyse uit te voeren die niet gebaseerd is op het berekenen van correlatie/covariantie en missende waardes dus oké zijn.*
+
+```{r}
+alpha1_matrix<-data.matrix(qcidata)
+#reliability(cov(alpha1_matrix))
+#cov(alpha1_matrix)
+
+#Individueel eigenaarschap (affectiviteit)
+vraag7=qcidata$Vraag7
+vraag8=qcidata$Vraag8
+vraag9=qcidata$Vraag9
+
+alpha2=data.frame(vraag7,vraag8,vraag9)
+alpha(alpha2)
+
+# Individueel eigenaarschap (cognitie)
+vraag10=qcidata$Vraag10
+vraag11=qcidata$Vraag11
+vraag12=qcidata$Vraag12
+vraag13=qcidata$Vraag13
+
+alpha3=data.frame(vraag10,vraag11,vraag12,vraag13)
+alpha(alpha3)
+
+#covariance / reliability
+# Vraag:waarom werkt onderste niet? zie onderzoek OVO
+
+alpha1_matrix<-data.matrix(alpha1)
+reliability(alpha1_matrix)
+reliability(alpha1)
+
+reliability(alpha2)
+reliability(alpha3)
+
+#cov(var(alpha1,na.rm = TRUE))
+#cov(var(alpha1_matrix,na.rm = TRUE))
+
+#reliability(cov(var(alpha1_matrix,na.rm = TRUE)))
+```
+
+## Path analysis
+
+In pad analyse meet de interne correlatie tussen variabelen. In tegen stelling tot een normale (multiple) regressie kijk je dus niet alleen naar invloed van de onafhankelijke variabelen op de afhankelijke variabelen, maar ook wat de invloed op de onafhankelijke variabelen op elkaar is. Hier wordt dan ook over endogene of exogene variabelen gesproken i.p.v. onafhankelijk en afhankelijk. Exogene variabelen hebben enkel invloed op andere variabelen (en is dus enkel als onafhankelijke variabelen te gebruiken, denk bijvoorbeeld aan leeftijd). Endogene variabelen zijn variabelen die zowel onafhankelijk als afhankelijk zijn denk bijvoorbeeld aan de hoogte van een tentamen cijfer. Een voorbeeld zou bijvoorbeeld kunnen zijn dat zowel leeftijd als tentamen cijfer invloed heeft op slagingskans. Leeftijd kan echter ook invloed hebben op tentamen cijfer.
+
+Als we op de huidige set met vragen een pad analyse willen uitvoeren moeten we eerst vaststellen wat de afhankelijke en onafhankelijke variabelen zijn. Bij wijze van voorbeeld is hieronder een test gedaan. Er valt echter niks te zeggen over de correlatie, hiervoor moet eerst een hypothese opgesteld worden die bepaald welke vragen correleren met elkaar.
+
+Uiteindelijk is de vraag: wat wil je meten/toetsen? Hypothese is key!
+
+```{r}
+library(car)
+# Lineare regressie
+model1  <- lm(Vraag1 ~ Vraag4 + Vraag5 + Vraag6 + Vraag7 + Vraag8 , data = qcidata)
+summary(model1) # show results
+
+model2  <- lm(Vraag4 ~ Vraag6 + Vraag7 + Vraag8 , data = qcidata)
+summary(model2) # show results
+avPlots(model2)
+```
+
+```{r}
+# pad analyse 
+library(lavaan)
+
+model <-'
+Vraag1 ~ Vraag4 + Vraag5 + Vraag6 + Vraag7 + Vraag8
+Vraag4 ~ Vraag6 + Vraag7 + Vraag8
+'
+
+fit <- cfa(model, data = qcidata)
+
+summary(fit, fit.measures = TRUE, standardized=T,rsquare=T)
+
+library(semPlot)
+semPaths(fit,"std",layout = 'tree', edge.label.cex=.9, curvePivot = TRUE)
+
+```
