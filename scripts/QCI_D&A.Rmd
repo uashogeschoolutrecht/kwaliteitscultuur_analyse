@@ -12,15 +12,17 @@ output:
 > *D&A: alleen libaries inladen die je ook daadwerkelijk gebruikt in je script! Dat scheelt anderen die al deze libraries niet hebben geinstalleerd veel tijd, en houd je code eenvoudiger, zie ook [hier](https://stackoverflow.com/questions/45030397/what-is-the-downside-of-loading-too-many-packages)*
 
 ```{r}
-library(psych)  #Nodig voor functie alpha
-library(sys)    #Nodig voor uitvragen system gebruikersnaam
+library(psych)     #Nodig voor functie alpha
+library(sys)       #Nodig voor uitvragen system gebruikersnaam
+library(lavaan)    #Nodig voor pad analyse
+library(semPlot)   #Nodig voor visualisatie pad analyse
 ```
 
 ## Inladen data
 
 Vraag:opschonen data in R , of in csv? Replace in R door wat? in script doen
 
-> *D&A: Opschonen data in R. Het handige hiervan is dat je exact terug kunt vinden hoe je dit gedaan hebt, en ook waarom en kun je eventueel de volgende keer exact hetzelfde automatisch uitvoeren. Wil je een voorbeeld zien? Kijk eens* [hier](https://github.com/Fraukje/NSE_Analyses/blob/main/NSE_data_cleaning.Rmd "Data cleaning stap van de NSE analytics"). *Afhankelijk van je analyse kun je missende waardes vervangen door het gemiddelde, omschalen naar een afwijkende waarde (bijvoorbeeld -1) of als missende waarde (NA) instellen. Omdat je hieronder met variantie en correlatie aan de gang gaat heeft waardes vervangen door het gemiddelde niet de voorkeur (dit heeft impact op je analyse uitkomsten).*
+> *D&A: opschonen data in R. Het handige hiervan is dat je exact terug kunt vinden hoe je dit gedaan hebt, en ook waarom en kun je eventueel de volgende keer exact hetzelfde automatisch uitvoeren. Wil je een voorbeeld zien? Kijk eens* [hier](https://github.com/Fraukje/NSE_Analyses/blob/main/NSE_data_cleaning.Rmd "Data cleaning stap van de NSE analytics"). *Afhankelijk van je analyse kun je missende waardes vervangen door het gemiddelde, omschalen naar een afwijkende waarde (bijvoorbeeld -1) of als missende waarde (NA) instellen. Omdat je hieronder met variantie en correlatie aan de gang gaat heeft waardes vervangen door het gemiddelde niet de voorkeur (dit heeft impact op je analyse uitkomsten).*
 
 ```{r}
 
@@ -129,7 +131,7 @@ avPlots(model2)
 
 ```{r}
 # pad analyse 
-library(lavaan)
+
 
 model <-'
 Vraag1 ~ Vraag4 + Vraag5 + Vraag6 + Vraag7 + Vraag8
@@ -140,7 +142,7 @@ fit <- cfa(model, data = qcidata)
 
 summary(fit, fit.measures = TRUE, standardized=T,rsquare=T)
 
-library(semPlot)
+
 semPaths(fit,"std",layout = 'tree', edge.label.cex=.9, curvePivot = TRUE)
 
 ```
