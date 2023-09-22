@@ -25,12 +25,14 @@ Vraag:opschonen data in R , of in csv? Replace in R door wat? in script doen
 > *D&A: opschonen data in R. Het handige hiervan is dat je exact terug kunt vinden hoe je dit gedaan hebt, en ook waarom en kun je eventueel de volgende keer exact hetzelfde automatisch uitvoeren. Wil je een voorbeeld zien? Kijk eens* [hier](https://github.com/Fraukje/NSE_Analyses/blob/main/NSE_data_cleaning.Rmd "Data cleaning stap van de NSE analytics"). *Afhankelijk van je analyse kun je missende waardes vervangen door het gemiddelde, omschalen naar een afwijkende waarde (bijvoorbeeld -1) of als missende waarde (NA) instellen. Omdat je hieronder met variantie en correlatie aan de gang gaat heeft waardes vervangen door het gemiddelde niet de voorkeur (dit heeft impact op je analyse uitkomsten).*
 
 ```{r}
-
+# Bepaal de gebruikersnaam
 gebruiker <- Sys.info()["user"]
+# Maak de string die verwijst naar de juiste folder
 data_dir <- paste(
   "C:\\Users\\",gebruiker,"\\Stichting Hogeschool Utrecht\\FCA-DA-P - Analytics\\Analyse kwaliteitscultuur\\data",
   sep="")
 
+# Lees de data in vanuit de folder
 qcidata <- read.csv2(
   paste(
     data_dir,"\\QCIdata_volledig.csv",sep=""), 
